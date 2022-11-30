@@ -93,6 +93,20 @@ Log:            日期        发布版本    作者   描述
             void ReplyMessage_Server(uint8_t* received_mes_load)
 */
 
+/* 调试 / 测试 / 样例 程序：
+    见 1451_tcp_test_server.c
+    与 1451_tcp_test_client.c
+*/
+
+
+
+
+
+/* ----------- 以下 IEEE 1451.5 lib 程序 开始 ----------- */
+
+/* 定义发送数据 函数指针，初始化时候应该填入 */
+unsigned int (*mes_1451_send)(unsigned char * data, unsigned int len);
+
 /* TIM 自己的固定 IP */ /* 固定 IP 吧，省心，在下面设定 */
 uint8_t NCAP_IP[4] = {192,168,120,0};
 
@@ -529,6 +543,10 @@ void TEDS_pack_up(uint8_t* dest_loader,uint32_t* length,uint8_t access_code)
             break;
     }
 
+    /* 长度限幅 */
+    whole_length = whole_length > MAX_TEDS_LOAD_SIZE ? \
+        MAX_TEDS_LOAD_SIZE : whole_length;
+
     *length = whole_length;
     memcpy(dest_loader, load_ptr, whole_length);
     
@@ -754,6 +772,7 @@ void Message_TIM_initiated_pack_up(void)
 /* 剩余其他 Message 在这里 挨个实现 ... 相当繁琐了 */
 
 /**************************** 消息的 发送，用户使用 ****************************/
+/* 发送 Message，一般是 NCAP 用 */
 void Message_pack_up_And_send(void)
 {
     /* 进行发送 */
@@ -765,18 +784,21 @@ void Message_pack_up_And_send(void)
         然后在 这里 发送数据。
     */
 
+   mes_1451_send(MES.Message_u->Message_load, MES.Message_load_Length);
 
 }
 
 /* 临时用到 */
-struct Message_struct Message_temp;
-struct ReplyMessage_struct ReplyMessage_temp;
+struct Message_struct Message_temp = { 0 };
+struct ReplyMessage_struct ReplyMessage_temp = { 0 };
 
 /**************************** 解析接收到的 Message 的 API ****************************/
 /* 接收 信息 字节数组 received_mes_load 并 解析 然后 将 结果放在 messageReceived 地址的结构体里 */
 void Message_decode(struct Message_struct* messageReceived,uint8_t* received_mes_load)
 {
     uint16_t i = 0;
+
+    memset(messageReceived, 0, sizeof(struct Message_struct));
     
     messageReceived->Dest_TIM_and_TC_Num[TIM_enum] = received_mes_load[0];
     messageReceived->Dest_TIM_and_TC_Num[TC_enum] = received_mes_load[1];
@@ -788,6 +810,10 @@ void Message_decode(struct Message_struct* messageReceived,uint8_t* received_mes
     /* 根据 NEED_SWITCH_LITTLE_BIG_END 来判断本平台与 发送数据的 平台的 大小端是否一致，若一致则进行大小端转换，否则不转换 */
     memcpy_with_BitLittle_switch((uint8_t*)(&(messageReceived->dependent_Length)),   \
             (uint8_t*)(&(received_mes_load[4])), sizeof((messageReceived->dependent_Length)), NEED_SWITCH_LITTLE_BIG_END);
+    
+    /* 长度限幅 */
+    messageReceived->dependent_Length = messageReceived->dependent_Length > MAX_Message_dependent_SIZE ? \
+        messageReceived->dependent_Length = MAX_Message_dependent_SIZE : messageReceived->dependent_Length;
 
     for(i = 0;i < messageReceived->dependent_Length;i++)
     {
@@ -917,6 +943,7 @@ void ReplyMessage_TIM_initiated_pack_up(void)
 }
 
 /**************************** 回复消息的 发送 ****************************/
+    /* 发送 ReplyMessage，一般是 TIM 用 */
 uint8_t ReplyMessage_send(uint8_t class, uint8_t command)
 {
     /* 这里我自己再定义，回复消息的 dependent 的尾部再添加两个字节，
@@ -933,6 +960,7 @@ uint8_t ReplyMessage_send(uint8_t class, uint8_t command)
         然后在这里 发送数据。
     */
 
+    mes_1451_send(MES.ReplyMessage_u->ReplyMessage_load, MES.ReplyMessage_load_Length);
 
 }
 
@@ -942,12 +970,18 @@ void ReplyMessage_decode(struct ReplyMessage_struct* replyMessageReceived,uint8_
 {
     uint16_t i = 0;
 
+    memset(replyMessageReceived, 0, sizeof(struct ReplyMessage_struct));
+
     replyMessageReceived->Flag = received_rep_mes_load[0];
     
     /* 根据 NEED_SWITCH_LITTLE_BIG_END 来判断本平台与 发送数据的 平台的 大小端是否一致，若一致则进行大小端转换，否则不转换 */
     memcpy_with_BitLittle_switch((uint8_t*)(&(replyMessageReceived->dependent_Length)),   \
             (uint8_t*)(&(received_rep_mes_load[1])), sizeof((replyMessageReceived->dependent_Length)), NEED_SWITCH_LITTLE_BIG_END);
     
+    /* 长度限幅 */
+    replyMessageReceived->dependent_Length = replyMessageReceived->dependent_Length > MAX_Message_dependent_SIZE ? \
+        replyMessageReceived->dependent_Length = MAX_Message_dependent_SIZE : replyMessageReceived->dependent_Length;
+
     for(i = 0;i < replyMessageReceived->dependent_Length;i++)
     {
         replyMessageReceived->dependent_load[i] = received_rep_mes_load[3 + i];

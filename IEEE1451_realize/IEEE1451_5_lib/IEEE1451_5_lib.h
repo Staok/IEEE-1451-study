@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+	extern "C" 
+	{
+#endif
+
 /* 以下程序分为四个部分：
     TEDS 格式定义
     TEDS API 定义
@@ -11,6 +16,9 @@
 
     关于占用内存空间，在 TEDS 和 Message 结构体构建时候 的
         联合体 里面都是按照一帧最大 200 字节定义的：
+            MAX_TEDS_LOAD_SIZE 和 MAX_Message_dependent_SIZE
+            一定要确保 这两个 宏（默认 200） 要大于 TEDS 和 Message & ReplyMessage 结构体的总大小
+            程序中只、已经做限幅，但是没有加报错返回
         
         四个 TEDS 就 四个 200 byte，
         Message 和 ReplyMessage 共两个 200 byte 
@@ -31,15 +39,15 @@
 */
 #define NEED_SWITCH_LITTLE_BIG_END		0
 
-#ifdef __cplusplus
-	extern "C" 
-	{
-#endif
+
+/* 定义发送数据 函数指针，初始化时候应该填入 */
+extern unsigned int (*mes_1451_send)(unsigned char * data, unsigned int len);
+
 
 enum TIM_status_enum
 {
     Initializing = 0,
-    sleep,
+    sLEEp,
     Idle,
     Operating,
 };
@@ -988,7 +996,7 @@ void Message_TIM_initiated_pack_up(void);
 void Message_pack_up_And_send(void);
 
 /**************************** 解析接收到的 Message 的 API ****************************/
-// void Message_decode(struct Message_struct* messageReceived,uint8_t* mes_load);
+void Message_decode(struct Message_struct* messageReceived,uint8_t* received_mes_load);
 
 /**************************** 根据相应 Message 填充 ReplyMessage 结构体 并打包数据的 API， 的 API ****************************/
 /* 打包好后的回复消息数据在 MES.ReplyMessage_u->ReplyMessage_load 里面，有效数据长度为 MES.ReplyMessage_load_Length */
@@ -1001,9 +1009,9 @@ void Message_pack_up_And_send(void);
 // void ReplyMessage_TIM_initiated_pack_up(void);
 
 /**************************** 回复消息的 发送 ****************************/
-// uint8_t ReplyMessage_send(uint8_t class, uint8_t command);
+// uint8_t ReplyMessage_send(uint8_t class, uint8_t command); 由 ReplyMessage_Server() 调用
 
-/**************************** 解析接收到的 回复消息 的 API ****************************/
+/**************************** 解析接收到的 消息 的 API ****************************/
 void ReplyMessage_decode(struct ReplyMessage_struct* replyMessageReceived,uint8_t* received_rep_mes_load);
 
 /**************************** ReplyMessage 服务程序，自动解析 Message 并回复，用户使用  ****************************/
