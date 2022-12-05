@@ -3,14 +3,16 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "socket\socket.h"
-#include "IEEE1451_5_lib\IEEE1451_5_lib.h"
+#include "..\socket\socket.h"
+#include "IEEE1451_5_lib.h"
 
 /* 编译命令：这里是 win 下 使用 MinGW 编译
-    gcc 1451_tcp_test_server.c .//socket//socket.c .//IEEE1451_5_lib//IEEE1451_5_lib.c -I .//socket -I .//IEEE1451_5_lib -lwsock32 -o 1451_tcp_test_server.exe
+    gcc 1451_tcp_test_server.c ..//socket//socket.c .//IEEE1451_5_lib.c -I ..//socket -I .// -lwsock32 -o 1451_tcp_test_server.exe
 */
 
 /* 我是 NCAP 程序 */
+
+/* 这里是 WIN 版本程序 */
 
 /* IEEE 1451 Message 数据 发送 接口 API */
 SOCKET socket_ncap = 0;
@@ -103,6 +105,29 @@ int main()
         ReplyMessage_temp.Flag,             \
         ReplyMessage_temp.dependent_Length  \
     );
+
+    /* 向 client 发 输入的东西，用于测试 */
+    char input[32] = { '\0' };
+	char recv_buf[128] = { '\0' };
+	int recv_n = 0;
+    while (1)
+	{
+		printf("Input a str to send: ");
+ 
+		scanf("%s", input);
+
+        if (strcmp("quit", input) == 0)
+        {
+            printf("quiting...\n");
+            break;
+        }
+ 
+		if( send(socket_tim, input, strlen(input), 0) < 0)
+            {
+                perror("client send error");
+                break;
+            }
+	}
 
     system("pause");
 

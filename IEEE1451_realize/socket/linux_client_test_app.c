@@ -13,7 +13,7 @@ int main(void)
 {
     linux_socket_TCP_client_loop_handle(linux_socket_TCP_client_init(
         0,
-        TEST_CLIENT_AIM_ADDR_STR,
+        TEST_CLIENT_AIM_WIN_ADDR_STR,
         TEST_CLIENT_AIM_PORT
     ));
     

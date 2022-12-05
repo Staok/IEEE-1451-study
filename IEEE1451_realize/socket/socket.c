@@ -388,14 +388,14 @@ int linux_socket_TCP_client_init(unsigned char defaultaddr,
 	addr.sin_port = htons(port);
     if(!defaultaddr)
     {
-        if(inet_pton(AF_INET,ip_str,&(addr.sin_addr)) < 0)
+        if(inet_pton(AF_INET, ip_str, &(addr.sin_addr)) < 0)
         {
             perror("client inet_pton 1 error");
             exit(-1);
         }
     }else
     {
-        if(inet_pton(AF_INET,CLIENT_DEFAULT_AIM_ADDR_STR,&(addr.sin_addr)) < 0)
+        if(inet_pton(AF_INET, CLIENT_DEFAULT_AIM_ADDR_STR, &(addr.sin_addr)) < 0)
         {
             perror("client inet_pton 2 error");
             exit(-1);

@@ -19,7 +19,7 @@ Others:
         改进的地方比如：
         1、TEDS 区分目前用 switch-case 但不如 表格驱动 写法好
         2、域类 TLV 里面的 TL 两个域的值 一般都是固定的，应该用 static 去在定义时候就初始化好值 并 不能再变
-        3、
+        3、填入结构体 有关的 打包、解包 API 里面都应该先 对参数 检测是否合法，打印警告信息 或 限幅
 
     本实现 对应的 IEEE 1451 标准协议 的 github/gitee 仓库 和 系列介绍文章：
         https://github.com/Staok/IEEE-1451-study
